@@ -1,0 +1,85 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect via the EU Data Act portal",
+        "description": "Use your CUPRA ID (My CUPRA app) credentials. First, in a browser at {url}: sign in, accept the consent screen, link your car and create a continuous data request (every 15 minutes). Without that request the portal returns no data. Data is read-only and lags the car by 15 minutes or more.",
+        "data": {
+          "username": "Email",
+          "password": "Password",
+          "brand": "Brand"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-enter password",
+        "description": "The portal rejected the stored password for {username}. If the password is still correct, sign in at {url} once to accept any new terms.",
+        "data": { "password": "Password" }
+      }
+    },
+    "error": {
+      "invalid_auth": "Email or password rejected.",
+      "consent_required": "Sign-in stopped at a terms or consent page. Sign in to the portal in a browser once, accept it and try again.",
+      "cannot_connect": "Could not reach the portal or finish the login. Check the logs.",
+      "no_vehicles": "No vehicle is linked on the portal. Link your car there first.",
+      "unknown": "Unexpected error. Check the logs."
+    },
+    "abort": {
+      "already_configured": "This account is already configured.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval": "Poll interval",
+          "local_soc_entity": "Live battery level sensor (optional)"
+        },
+        "data_description": {
+          "scan_interval": "How often to check the portal for new datasets. New data arrives at most every 15 minutes.",
+          "local_soc_entity": "For example an OBD dongle (WiCAN) or wallbox SoC sensor. Adds a 'Battery level (best)' sensor that uses whichever value is fresher."
+        }
+      }
+    }
+  },
+  "selector": {
+    "brand": {
+      "options": {
+        "cupra": "CUPRA",
+        "seat": "SEAT",
+        "volkswagen": "Volkswagen",
+        "audi": "Audi",
+        "skoda": "Škoda"
+      }
+    }
+  },
+  "issues": {
+    "not_configured": {
+      "title": "No data request for {name}",
+      "description": "The EU Data Act portal has no data request for {name}. Open {url}, select the car and create a continuous data request (every 15 minutes). Sensors stay empty until the first dataset arrives, which can take from 15 minutes to a day."
+    },
+    "consent_required": {
+      "title": "EU Data Act portal needs a browser sign-in",
+      "description": "Sign-in stopped at a terms or consent page. Sign in at {url} in a browser, accept the prompt, then reload the integration."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery_level": { "name": "Battery level" },
+      "battery_level_best": { "name": "Battery level (best)" },
+      "range": { "name": "Range" },
+      "odometer": { "name": "Odometer" },
+      "target_soc": { "name": "Charge target" },
+      "remaining_charging_time": { "name": "Remaining charging time" },
+      "charge_power": { "name": "Charge power" },
+      "charging_state": { "name": "Charging state" },
+      "last_data": { "name": "Last measurement" },
+      "last_delivery": { "name": "Last portal delivery" }
+    },
+    "binary_sensor": {
+      "plugged_in": { "name": "Plugged in" },
+      "charging": { "name": "Charging" }
+    }
+  }
+}
