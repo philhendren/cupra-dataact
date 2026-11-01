@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install ruff
+        run: uv sync --locked --only-group lint
+      - name: Ruff lint
+        run: uv run --no-sync ruff check --output-format=github .
+      - name: Ruff format
+        run: uv run --no-sync ruff format --check .
+      - name: tests/README.md is up to date
+        run: uv run --no-sync python tools/gen_tests_readme.py --check
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --locked
+      - name: Pytest
+        run: uv run --no-sync pytest -p no:cacheprovider --junitxml=test-results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results.xml

@@ -1,5 +1,30 @@
+[project]
+name = "cupra-dataact"
+version = "0.1.0"
+description = "Home Assistant integration for CUPRA vehicle data via the VW Group EU Data Act portal"
+readme = "README.md"
+# pytest-homeassistant-custom-component 0.13.316 pins Home Assistant 2026.2.x, the last line on Python 3.13
+requires-python = ">=3.13.2,<3.14"
+dependencies = []
+
+[dependency-groups]
+lint = ["ruff==0.17.3"]
+test = [
+    "pytest-homeassistant-custom-component==0.13.316",
+    "aioresponses==0.7.9",
+]
+
+[tool.uv]
+package = false
+default-groups = ["lint", "test"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
 [tool.ruff]
 line-length = 120
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
