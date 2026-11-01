@@ -16,6 +16,7 @@ from .conftest import setup_entry
 
 
 async def test_setup_and_unload(hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock) -> None:
+    """The entry loads with the default poll interval, and unloading closes the client."""
     assert await setup_entry(hass, config_entry)
     assert config_entry.state is ConfigEntryState.LOADED
     mock_client.login.assert_awaited_once()
@@ -27,6 +28,7 @@ async def test_setup_and_unload(hass: HomeAssistant, config_entry: MockConfigEnt
 
 
 async def test_scan_interval_option(hass: HomeAssistant, mock_client: MagicMock) -> None:
+    """The poll interval option is applied."""
     entry = MockConfigEntry(
         domain="cupra_dataact",
         data={"username": "a@b.c", "password": "pw", "brand": "cupra"},
@@ -40,6 +42,7 @@ async def test_scan_interval_option(hass: HomeAssistant, mock_client: MagicMock)
 async def test_auth_failure_starts_reauth(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Bad credentials at startup fail setup, start re-authentication and close the client."""
     mock_client.login.side_effect = AuthError("bad")
     assert not await setup_entry(hass, config_entry)
     assert config_entry.state is ConfigEntryState.SETUP_ERROR
@@ -50,6 +53,7 @@ async def test_auth_failure_starts_reauth(
 async def test_portal_error_retries_setup(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """A portal error at startup schedules a setup retry and closes the client."""
     mock_client.vehicles.side_effect = DataActError("down")
     assert not await setup_entry(hass, config_entry)
     assert config_entry.state is ConfigEntryState.SETUP_RETRY
@@ -59,6 +63,7 @@ async def test_portal_error_retries_setup(
 async def test_consent_required_raises_issue(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """A consent page at startup retries setup and raises a repair issue linking to the page."""
     from homeassistant.helpers import issue_registry as ir
 
     mock_client.login.side_effect = ConsentRequired("terms", "https://identity.vwgroup.io/terms")
@@ -71,6 +76,7 @@ async def test_consent_required_raises_issue(
 async def test_options_change_reloads(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Changing options reloads the entry with the new interval."""
     assert await setup_entry(hass, config_entry)
     hass.config_entries.async_update_entry(config_entry, options={CONF_SCAN_INTERVAL: 7})
     await hass.async_block_till_done()
@@ -82,6 +88,7 @@ async def test_options_change_reloads(
 async def test_remove_entry_deletes_store(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock, hass_storage: dict
 ) -> None:
+    """Removing the entry deletes its saved data."""
     assert await setup_entry(hass, config_entry)
     await config_entry.runtime_data._store.async_save({"x": {}})
     key = f"cupra_dataact.{config_entry.entry_id}"

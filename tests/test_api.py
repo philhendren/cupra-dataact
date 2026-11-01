@@ -1,4 +1,4 @@
-"""Offline tests for the portal client (no Home Assistant needed)."""
+"""Portal client: login flows, HTTP handling and dataset parsing (runs without Home Assistant)."""
 
 from __future__ import annotations
 
@@ -37,6 +37,7 @@ def dp(name: str, value: str, ts: str, key: str = "") -> dict:
 
 
 def test_parse_dataset_keeps_newest_per_id():
+    """A dataset keeps the newest value per field, tells GUID keys apart and drops empty values."""
     blob = make_zip(
         [
             dp("mileage", "100", "2026-10-01T10:00:00Z"),
@@ -56,11 +57,13 @@ def test_parse_dataset_keeps_newest_per_id():
 
 
 def test_missing_timestamp_does_not_override():
+    """A point without a timestamp never replaces one that has a timestamp."""
     points = api.parse_points([dp("x", "1", "2026-10-01T10:00:00Z"), {"dataFieldName": "x", "value": "2"}])
     assert points[0].value == "1"
 
 
 def test_content_datasets_skips_placeholders_and_sorts():
+    """Empty `_no_content_found.zip` placeholders are skipped and datasets are sorted oldest first."""
     items = [
         {"name": "b.zip", "createdOn": "2026-10-01T10:15:00Z"},
         {"name": "x_no_content_found.zip", "createdOn": "2026-10-01T10:30:00Z"},
@@ -70,6 +73,7 @@ def test_content_datasets_skips_placeholders_and_sorts():
 
 
 def test_lookup_prefers_latest_delivery_then_priority():
+    """Lookup returns the most recently delivered value, and the most authoritative field on a tie."""
     state = api.VehicleState()
     state.merge(api.parse_points([dp("state_of_charge", "40", "2026-10-01T10:00:00Z")]))
     state.merge(api.parse_points([dp("battery_level_HV.value", "60", "2026-10-01T11:00:00Z")]))
@@ -79,6 +83,7 @@ def test_lookup_prefers_latest_delivery_then_priority():
 
 
 def test_state_roundtrip():
+    """Vehicle state survives a save and load through JSON unchanged."""
     state = api.VehicleState(identifier=IDENT)
     state.merge(api.parse_points([dp("mileage", "1", "2026-10-01T10:00:00Z")]))
     state.after = api.parse_time("2026-10-01T10:00:00Z")
@@ -88,6 +93,7 @@ def test_state_roundtrip():
 
 
 def test_pending_backfill_limit():
+    """First start downloads only the newest 8 datasets; later polls download only newer ones."""
     ds = [api.Dataset(f"{i}.zip", api.parse_time(f"2026-10-01T{i:02d}:00:00Z")) for i in range(12)]
     assert len(api.pending(ds, None)) == api.MAX_BACKFILL
     assert [d.name for d in api.pending(ds, ds[9].created_on)] == ["10.zip", "11.zip"]
@@ -106,6 +112,7 @@ def test_pending_backfill_limit():
     ],
 )
 def test_charge_status(fields, expected):
+    """Plugged-in and charging are derived correctly from plug state, charge state and charging scenario."""
     state = api.VehicleState()
     state.merge(api.parse_points([dp(k, v, "2026-10-01T10:00:00Z") for k, v in fields.items()]))
     assert (
@@ -120,6 +127,7 @@ def test_charge_status(fields, expected):
 
 
 def test_parse_idk():
+    """The legacy password page's `window._IDK` object is parsed into tokens and form targets."""
     html = """<script>window._IDK = {
         templateModel: {"hmac":"h2","relayState":"r2","postAction":"login/authenticate","identifierUrl":"login/identifier","error":null},
         csrf_token: 'c2',
@@ -159,6 +167,7 @@ def mock_data(m: aioresponses) -> None:
 
 
 async def test_universal_login_and_update():
+    """Auth0 Universal Login, then listing vehicles and downloading a dataset, works end to end."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(AUTH_RE, status=302, headers={"Location": "https://identity.vwgroup.io/u/login?state=st123"})
@@ -183,6 +192,7 @@ async def test_universal_login_and_update():
 
 
 async def test_legacy_login():
+    """The legacy two-step (email, then password) login lands on the portal."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(
@@ -202,6 +212,7 @@ async def test_legacy_login():
 
 
 async def test_marketing_consent_is_skipped():
+    """An optional marketing consent page is declined through its callback and login completes."""
     client = api.DataActClient("me@example.com", "pw")
     consent = "https://identity.vwgroup.io/consent/marketing/x?callback=https%3A%2F%2Fidentity.vwgroup.io%2Foidc%2Fv1%2Foauth%2Fclient%2Fcallback%3Fa%3D1"
     with aioresponses() as m:
@@ -217,6 +228,7 @@ async def test_marketing_consent_is_skipped():
 
 
 async def test_wrong_password():
+    """Auth0 rejecting the password raises an authentication error."""
     client = api.DataActClient("me@example.com", "bad")
     with aioresponses() as m:
         m.get(AUTH_RE, body=ULP_PAGE)
@@ -227,6 +239,7 @@ async def test_wrong_password():
 
 
 async def test_terms_page_requires_consent():
+    """Landing on a terms page raises a consent-required error."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(AUTH_RE, body=ULP_PAGE)
@@ -242,6 +255,7 @@ async def test_terms_page_requires_consent():
 
 
 async def test_relogin_on_403_and_not_configured():
+    """A 403 triggers one re-login, and a 404 for the data request means the car isn't configured."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial", status=403)
@@ -257,6 +271,7 @@ async def test_relogin_on_403_and_not_configured():
 
 
 def test_dataset_without_json_is_rejected():
+    """A dataset archive with no JSON file is rejected."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         zf.writestr("readme.txt", "nothing here")
@@ -265,6 +280,7 @@ def test_dataset_without_json_is_rejected():
 
 
 def test_dataset_with_bom_and_no_data():
+    """A JSON file with a byte-order mark and a null `Data` list parses to no points."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         zf.writestr("d.JSON", "﻿" + json.dumps({"vin": VIN, "Data": None}))
@@ -272,21 +288,25 @@ def test_dataset_with_bom_and_no_data():
 
 
 def test_parse_idk_missing():
+    """A password page without `window._IDK` raises an error."""
     with pytest.raises(api.DataActError):
         api.parse_idk("<html>no idk</html>")
 
 
 def test_parse_forms_inputs_outside_form():
+    """Hidden inputs outside a `<form>` element are still found."""
     forms = api.parse_forms('<div><input name="state" value="s1"></div>')
     assert forms[0]["inputs"] == {"state": "s1"}
 
 
 def test_unknown_brand():
+    """An unsupported brand is refused when creating the client."""
     with pytest.raises(ValueError):
         api.DataActClient("a", "b", "porsche")
 
 
 async def test_vehicles_wrapped_and_alternate_fields():
+    """Vehicle lists wrapped in `{vehicles: []}` with alternate VIN and name fields are read; entries without a VIN are dropped."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(
@@ -303,6 +323,7 @@ async def test_vehicles_wrapped_and_alternate_fields():
 
 
 async def test_datasets_wrapped_and_missing():
+    """Dataset lists wrapped in `{files: []}` are read, and a 404 means no files yet."""
     client = api.DataActClient("me@example.com", "pw")
     url = f"{PORTAL}/proxy_api/euda-apim/datadelivery/vehicles/{VIN}/{IDENT}/list"
     with aioresponses() as m:
@@ -314,6 +335,7 @@ async def test_datasets_wrapped_and_missing():
 
 
 async def test_identifier_empty_is_not_configured():
+    """An empty data-request identifier means the car isn't configured."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial", payload={"Identifier": ""})
@@ -323,6 +345,7 @@ async def test_identifier_empty_is_not_configured():
 
 
 async def test_rate_limit_waits_retry_after(monkeypatch):
+    """A 429 waits for `Retry-After`, capped at 30 seconds, then retries."""
     waits = []
 
     async def fake_sleep(seconds):
@@ -341,6 +364,7 @@ async def test_rate_limit_waits_retry_after(monkeypatch):
 
 
 async def test_server_error_raises():
+    """A 500 from the portal raises an error that includes the status."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial", status=500, body="oops")
@@ -350,6 +374,7 @@ async def test_server_error_raises():
 
 
 async def test_second_rejection_after_relogin_is_auth_error():
+    """If the portal still rejects the session after a fresh login, it's an authentication error."""
     client = api.DataActClient("me@example.com", "pw")
     url = f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial"
     with aioresponses() as m:
@@ -363,6 +388,7 @@ async def test_second_rejection_after_relogin_is_auth_error():
 
 
 async def test_concurrent_relogin_runs_once():
+    """A login requested with a stale generation is skipped, so concurrent callers log in once."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(AUTH_RE, body=ULP_PAGE)
@@ -376,6 +402,7 @@ async def test_concurrent_relogin_runs_once():
 
 
 async def test_unknown_login_page():
+    """An unrecognised login page (for example a captcha) raises a clear error."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(AUTH_RE, body="<html><form id='captcha'></form></html>")
@@ -385,6 +412,7 @@ async def test_unknown_login_page():
 
 
 async def test_redirect_to_foreign_host_is_refused():
+    """Login refuses to follow redirects to hosts other than VW identity and the portal."""
     client = api.DataActClient("me@example.com", "pw")
     with aioresponses() as m:
         m.get(AUTH_RE, status=302, headers={"Location": "https://evil.example.com/login"})
@@ -394,6 +422,7 @@ async def test_redirect_to_foreign_host_is_refused():
 
 
 async def test_legacy_wrong_password():
+    """The legacy flow's `?error=` redirect raises an authentication error."""
     client = api.DataActClient("me@example.com", "bad")
     with aioresponses() as m:
         m.get(AUTH_RE, body=LEGACY_PAGE)
@@ -415,6 +444,7 @@ async def test_legacy_wrong_password():
 
 
 async def test_legacy_unknown_email():
+    """The legacy flow reports an unknown email as an authentication error."""
     client = api.DataActClient("nobody@example.com", "pw")
     page = LEGACY_PW_PAGE.replace('"error":null', '"error":"account.not.found"')
     with aioresponses() as m:
@@ -426,6 +456,7 @@ async def test_legacy_unknown_email():
 
 
 async def test_update_only_downloads_new_datasets():
+    """Each poll downloads only datasets newer than the last one merged."""
     client = api.DataActClient("me@example.com", "pw")
     list_url = f"{PORTAL}/proxy_api/euda-apim/datadelivery/vehicles/{VIN}/{IDENT}/list"
     dl_url = f"{PORTAL}/proxy_api/euda-apim/datadelivery/vehicles/{VIN}/{IDENT}/download"

@@ -25,6 +25,7 @@ async def refresh(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:
 async def test_restores_saved_points(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock, hass_storage: dict
 ) -> None:
+    """Saved data points are restored at startup, so sensors have values before any download."""
     hass_storage[f"{DOMAIN}.{config_entry.entry_id}"] = {
         "version": 1,
         "key": f"{DOMAIN}.{config_entry.entry_id}",
@@ -53,6 +54,7 @@ async def test_saves_merged_points(
     hass_storage: dict,
     freezer: FrozenDateTimeFactory,
 ) -> None:
+    """Newly merged data points are written to storage."""
     assert await setup_entry(hass, config_entry)
     freezer.tick(15)  # delayed save
     async_fire_time_changed(hass)
@@ -65,6 +67,7 @@ async def test_saves_merged_points(
 async def test_one_vehicle_failing_keeps_the_other(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """One car failing to update doesn't stop the other car's sensors."""
     mock_client.vehicles.return_value = [
         {"vin": VIN, "name": "Born", "model": "Born"},
         {"vin": VIN2, "name": "Formentor", "model": "Formentor"},
@@ -85,6 +88,7 @@ async def test_one_vehicle_failing_keeps_the_other(
 async def test_all_vehicles_failing_marks_unavailable(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock, freezer: FrozenDateTimeFactory
 ) -> None:
+    """Sensors go unavailable when every car fails, and recover on the next good poll."""
     assert await setup_entry(hass, config_entry)
     assert hass.states.get("sensor.born_battery_level").state == "72.0"
 
@@ -100,6 +104,7 @@ async def test_all_vehicles_failing_marks_unavailable(
 async def test_not_configured_issue_is_created_and_cleared(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock, freezer: FrozenDateTimeFactory
 ) -> None:
+    """A missing data request raises a repair issue, which clears once data arrives."""
     mock_client.update.side_effect = NotConfigured(VIN)
     assert await setup_entry(hass, config_entry)
     registry = ir.async_get(hass)
@@ -115,6 +120,7 @@ async def test_not_configured_issue_is_created_and_cleared(
 async def test_auth_error_during_update_starts_reauth(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock, freezer: FrozenDateTimeFactory
 ) -> None:
+    """An authentication error during polling starts re-authentication."""
     assert await setup_entry(hass, config_entry)
     mock_client.update.side_effect = AuthError("expired")
     await refresh(hass, freezer)
@@ -124,6 +130,7 @@ async def test_auth_error_during_update_starts_reauth(
 async def test_consent_during_update_raises_issue(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock, freezer: FrozenDateTimeFactory
 ) -> None:
+    """A consent page during polling raises a repair issue and marks sensors unavailable."""
     assert await setup_entry(hass, config_entry)
     mock_client.update.side_effect = ConsentRequired("terms")
     await refresh(hass, freezer)
@@ -134,6 +141,8 @@ async def test_consent_during_update_raises_issue(
 async def test_last_data_is_newest_point(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Last measurement is the newest timestamp across all points."""
+
     def update(vin, state):
         fill(state, {"mileage": "1"}, "2026-10-01T08:00:00Z")
         return fill(state, {"state_of_charge": "60"}, "2026-10-01T09:30:00Z")

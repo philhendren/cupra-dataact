@@ -1,4 +1,0 @@
-# Pins Home Assistant 2026.2.x (the last release line that supports Python 3.13)
-pytest-homeassistant-custom-component==0.13.316
-aioresponses==0.7.9
-ruff==0.17.3

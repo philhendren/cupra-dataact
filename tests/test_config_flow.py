@@ -23,6 +23,7 @@ async def start(hass: HomeAssistant) -> dict:
 
 
 async def test_user_flow_creates_entry(hass: HomeAssistant, flow_client: MagicMock, mock_client: MagicMock) -> None:
+    """Valid credentials create an entry titled with the email and car names."""
     flow_client.vehicles.return_value = [
         {"vin": "V1", "name": "Born", "model": None},
         {"vin": VIN2, "name": "Formentor", "model": None},
@@ -48,6 +49,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant, flow_client: MagicMo
     ],
 )
 async def test_user_flow_errors(hass: HomeAssistant, flow_client: MagicMock, error: Exception, expected: str) -> None:
+    """Each login failure shows the matching form error and closes the client."""
     flow_client.login.side_effect = error
     result = await start(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], DATA)
@@ -57,6 +59,7 @@ async def test_user_flow_errors(hass: HomeAssistant, flow_client: MagicMock, err
 
 
 async def test_user_flow_no_vehicles(hass: HomeAssistant, flow_client: MagicMock) -> None:
+    """An account with no linked cars shows the no-vehicles error."""
     flow_client.vehicles.return_value = []
     result = await start(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], DATA)
@@ -66,6 +69,7 @@ async def test_user_flow_no_vehicles(hass: HomeAssistant, flow_client: MagicMock
 async def test_user_flow_recovers_after_error(
     hass: HomeAssistant, flow_client: MagicMock, mock_client: MagicMock
 ) -> None:
+    """The form can be resubmitted after an error and then succeeds."""
     flow_client.login.side_effect = AuthError("bad")
     result = await start(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], DATA)
@@ -80,6 +84,7 @@ async def test_user_flow_recovers_after_error(
 async def test_user_flow_duplicate_aborts(
     hass: HomeAssistant, config_entry: MockConfigEntry, flow_client: MagicMock
 ) -> None:
+    """Adding the same account twice (any email case) aborts before logging in."""
     result = await start(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {**DATA, "username": "ME@example.com"})
     assert result["type"] is FlowResultType.ABORT
@@ -90,6 +95,7 @@ async def test_user_flow_duplicate_aborts(
 async def test_reauth_updates_password(
     hass: HomeAssistant, config_entry: MockConfigEntry, flow_client: MagicMock, mock_client: MagicMock
 ) -> None:
+    """Re-authentication stores the new password and reloads."""
     result = await config_entry.start_reauth_flow(hass)
     assert result["step_id"] == "reauth_confirm"
 
@@ -103,6 +109,7 @@ async def test_reauth_updates_password(
 async def test_reauth_rejects_wrong_password(
     hass: HomeAssistant, config_entry: MockConfigEntry, flow_client: MagicMock
 ) -> None:
+    """A wrong password during re-authentication shows an error and keeps the old one."""
     flow_client.login.side_effect = AuthError("bad")
     result = await config_entry.start_reauth_flow(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_PASSWORD: "wrong"})
@@ -112,6 +119,7 @@ async def test_reauth_rejects_wrong_password(
 
 
 async def test_options_flow(hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock) -> None:
+    """Options save the poll interval and local battery sensor and add the best-battery sensor."""
     assert await setup_entry(hass, config_entry)
     hass.states.async_set("sensor.obd_soc", "50", {"device_class": "battery"})
 

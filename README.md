@@ -47,13 +47,16 @@ python tools/probe.py you@example.com          # add --all to dump every data po
 
 ## Development
 
+The project uses [uv](https://docs.astral.sh/uv/) for dependencies and [ruff](https://docs.astral.sh/ruff/) for linting and formatting. Tool versions are pinned in `pyproject.toml` and `uv.lock`.
+
 ```sh
-pip install -r requirements_test.txt   # Python 3.13
-pytest
-ruff check . && ruff format --check .
+uv sync                                    # Python 3.13 venv with the pinned test and lint tools
+uv run pytest                              # all tests, offline
+uv run ruff check . && uv run ruff format --check .
+uv run python tools/gen_tests_readme.py    # regenerate tests/README.md after changing tests
 ```
 
-GitHub Actions runs the same lint and tests on every pull request and on pushes to `main`.
+[tests/README.md](tests/README.md) lists every test, what it checks and links to each assert. GitHub Actions runs ruff, the tests and a check that the test README is up to date on every pull request and push to `main`.
 
 The portal protocol lives in `custom_components/cupra_dataact/api.py`, which has no HA imports.
 It mirrors evcc's `vehicle/vw/eudataact`, so check that project when VW changes something.

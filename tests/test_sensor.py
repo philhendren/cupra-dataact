@@ -20,6 +20,7 @@ from .conftest import DATA, VIN, fill, setup_entry, updater
 
 
 async def test_value_sensors(hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock) -> None:
+    """Each value sensor shows the expected state and unit."""
     assert await setup_entry(hass, config_entry)
     expected = {
         "sensor.born_battery_level": ("72.0", "%"),
@@ -39,6 +40,7 @@ async def test_value_sensors(hass: HomeAssistant, config_entry: MockConfigEntry,
 async def test_measured_at_and_field_attributes(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Sensors expose when the value was measured and which field it came from."""
     assert await setup_entry(hass, config_entry)
     attrs = hass.states.get("sensor.born_battery_level").attributes
     assert attrs["field"] == "state_of_charge"
@@ -48,6 +50,7 @@ async def test_measured_at_and_field_attributes(
 async def test_missing_values_are_unknown_without_attributes(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Missing fields show as unknown with no measurement attributes."""
     mock_client.update.side_effect = updater({"mileage": "5"})
     assert await setup_entry(hass, config_entry)
     state = hass.states.get("sensor.born_battery_level")
@@ -59,6 +62,7 @@ async def test_missing_values_are_unknown_without_attributes(
 async def test_non_numeric_value_is_unknown(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """A non-numeric value for a numeric sensor shows as unknown."""
     mock_client.update.side_effect = updater({"state_of_charge": "invalid"})
     assert await setup_entry(hass, config_entry)
     assert hass.states.get("sensor.born_battery_level").state == "unknown"
@@ -67,6 +71,8 @@ async def test_non_numeric_value_is_unknown(
 async def test_guid_soc_key_wins_over_named_field(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """The current-SoC GUID key wins over the generic `state_of_charge` field."""
+
     def update(vin, state):
         state.merge(
             [
@@ -84,6 +90,7 @@ async def test_guid_soc_key_wins_over_named_field(
 async def test_charge_power_disabled_by_default(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Charge power is created but disabled by default."""
     assert await setup_entry(hass, config_entry)
     entry = er.async_get(hass).async_get("sensor.born_charge_power")
     assert entry is not None and entry.disabled_by is er.RegistryEntryDisabler.INTEGRATION
@@ -93,6 +100,7 @@ async def test_charge_power_disabled_by_default(
 async def test_diagnostic_timestamps(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Last measurement and last portal delivery are diagnostic timestamp sensors."""
     assert await setup_entry(hass, config_entry)
     registry = er.async_get(hass)
     for entity_id in ("sensor.born_last_measurement", "sensor.born_last_portal_delivery"):
@@ -101,6 +109,7 @@ async def test_diagnostic_timestamps(
 
 
 async def test_device_info(hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock) -> None:
+    """The car's device has its name, CUPRA as manufacturer and the VIN as serial number."""
     assert await setup_entry(hass, config_entry)
     device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, VIN)})
     assert device.name == "Born"
@@ -109,6 +118,7 @@ async def test_device_info(hass: HomeAssistant, config_entry: MockConfigEntry, m
 
 
 async def test_seat_brand_manufacturer(hass: HomeAssistant, mock_client: MagicMock) -> None:
+    """A SEAT account labels the device manufacturer as SEAT."""
     entry = MockConfigEntry(domain=DOMAIN, data={**DATA, "brand": "seat"})
     entry.add_to_hass(hass)
     assert await setup_entry(hass, entry)
@@ -133,6 +143,7 @@ async def test_binary_sensors(
     plugged: str,
     charging: str,
 ) -> None:
+    """Plugged in and charging follow the car's plug, charge state and charging scenario."""
     mock_client.update.side_effect = updater(values)
     assert await setup_entry(hass, config_entry)
     assert hass.states.get("binary_sensor.born_plugged_in").state == plugged
@@ -152,6 +163,7 @@ def local_entry(hass: HomeAssistant) -> MockConfigEntry:
 async def test_best_soc_absent_without_option(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Battery level (best) isn't created without a local sensor."""
     assert await setup_entry(hass, config_entry)
     assert hass.states.get("sensor.born_battery_level_best") is None
 
@@ -159,6 +171,7 @@ async def test_best_soc_absent_without_option(
 async def test_best_soc_uses_fresher_local_and_tracks_changes(
     hass: HomeAssistant, local_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Battery level (best) uses a newer local reading and updates when it changes."""
     hass.states.async_set("sensor.obd_soc", "80")
     assert await setup_entry(hass, local_entry)
     best = hass.states.get("sensor.born_battery_level_best")
@@ -172,6 +185,7 @@ async def test_best_soc_uses_fresher_local_and_tracks_changes(
 async def test_best_soc_prefers_newer_portal_value(
     hass: HomeAssistant, local_entry: MockConfigEntry, mock_client: MagicMock, freezer: FrozenDateTimeFactory
 ) -> None:
+    """Battery level (best) uses the portal value when it is newer than the local reading."""
     freezer.move_to("2026-10-01T09:00:00Z")
     hass.states.async_set("sensor.obd_soc", "50")  # reported before the portal measurement at 10:00
     freezer.move_to("2026-10-01T10:30:00Z")
@@ -184,6 +198,7 @@ async def test_best_soc_prefers_newer_portal_value(
 async def test_best_soc_ignores_unusable_local(
     hass: HomeAssistant, local_entry: MockConfigEntry, mock_client: MagicMock, local_state: str
 ) -> None:
+    """Battery level (best) ignores an unavailable, unknown or non-numeric local sensor."""
     hass.states.async_set("sensor.obd_soc", local_state)
     assert await setup_entry(hass, local_entry)
     best = hass.states.get("sensor.born_battery_level_best")
@@ -191,6 +206,7 @@ async def test_best_soc_ignores_unusable_local(
 
 
 async def test_best_soc_local_only(hass: HomeAssistant, local_entry: MockConfigEntry, mock_client: MagicMock) -> None:
+    """Battery level (best) uses the local reading when the portal has no SoC."""
     mock_client.update.side_effect = updater({"mileage": "1"})
     hass.states.async_set("sensor.obd_soc", "33")
     assert await setup_entry(hass, local_entry)
@@ -200,6 +216,7 @@ async def test_best_soc_local_only(hass: HomeAssistant, local_entry: MockConfigE
 async def test_best_soc_nothing_available(
     hass: HomeAssistant, local_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Battery level (best) is unknown with no source when neither value exists."""
     mock_client.update.side_effect = lambda vin, state: fill(state, {"mileage": "1"})
     assert await setup_entry(hass, local_entry)
     best = hass.states.get("sensor.born_battery_level_best")
@@ -208,5 +225,6 @@ async def test_best_soc_nothing_available(
 
 def test_now_is_timezone_aware() -> None:
     # guards the comparison between HA's last_reported and portal timestamps
+    """Timestamps are timezone-aware, so local and portal readings compare correctly."""
     assert dt_util.utcnow().tzinfo is not None
     assert parse_time("2026-10-01T10:00:00Z") - parse_time("2026-10-01T09:00:00") == timedelta(hours=1)

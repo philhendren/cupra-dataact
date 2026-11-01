@@ -15,6 +15,7 @@ from .conftest import VIN, setup_entry, updater
 async def test_diagnostics_redacts_credentials_and_location(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
 ) -> None:
+    """Diagnostics hide credentials, the VIN and location values but keep other data points."""
     mock_client.update.side_effect = updater(
         {"state_of_charge": "72", "gps_latitude": "52.52", "parking_position.longitude": "13.40"}
     )
