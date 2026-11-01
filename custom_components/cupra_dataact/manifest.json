@@ -1,13 +1,15 @@
 {
   "domain": "cupra_dataact",
   "name": "CUPRA (EU Data Act)",
-  "codeowners": [],
+  "codeowners": [
+    "@philhendren"
+  ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/OWNER/cupra_dataact",
+  "documentation": "https://github.com/philhendren/cupra-dataact",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/OWNER/cupra_dataact/issues",
+  "issue_tracker": "https://github.com/philhendren/cupra-dataact/issues",
   "requirements": [],
   "version": "0.1.0"
 }
