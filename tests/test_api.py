@@ -251,3 +251,203 @@ async def test_relogin_on_403_and_not_configured():
         with pytest.raises(api.NotConfigured):
             await client.identifier(VIN)
     await client.close()
+
+
+# --- edge cases ------------------------------------------------------------------
+
+
+def test_dataset_without_json_is_rejected():
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("readme.txt", "nothing here")
+    with pytest.raises(api.DataActError):
+        api.parse_dataset(buf.getvalue())
+
+
+def test_dataset_with_bom_and_no_data():
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("d.JSON", "﻿" + json.dumps({"vin": VIN, "Data": None}))
+    assert api.parse_dataset(buf.getvalue()) == (VIN, [])
+
+
+def test_parse_idk_missing():
+    with pytest.raises(api.DataActError):
+        api.parse_idk("<html>no idk</html>")
+
+
+def test_parse_forms_inputs_outside_form():
+    forms = api.parse_forms('<div><input name="state" value="s1"></div>')
+    assert forms[0]["inputs"] == {"state": "s1"}
+
+
+def test_unknown_brand():
+    with pytest.raises(ValueError):
+        api.DataActClient("a", "b", "porsche")
+
+
+async def test_vehicles_wrapped_and_alternate_fields():
+    client = api.DataActClient("me@example.com", "pw")
+    with aioresponses() as m:
+        m.get(
+            f"{PORTAL}/proxy_api/consent/me/vehicles?viewPosition=FRONT_LEFT",
+            payload={
+                "vehicles": [
+                    {"vehicleIdentificationNumber": VIN, "modelName": "Born"},
+                    {"nickName": "no vin"},
+                ]
+            },
+        )
+        assert await client.vehicles() == [{"vin": VIN, "name": "Born", "model": "Born"}]
+    await client.close()
+
+
+async def test_datasets_wrapped_and_missing():
+    client = api.DataActClient("me@example.com", "pw")
+    url = f"{PORTAL}/proxy_api/euda-apim/datadelivery/vehicles/{VIN}/{IDENT}/list"
+    with aioresponses() as m:
+        m.get(url, payload={"files": [{"name": "a.zip"}]})
+        m.get(url, status=404)  # no files yet
+        assert await client.datasets(VIN, IDENT) == [{"name": "a.zip"}]
+        assert await client.datasets(VIN, IDENT) == []
+    await client.close()
+
+
+async def test_identifier_empty_is_not_configured():
+    client = api.DataActClient("me@example.com", "pw")
+    with aioresponses() as m:
+        m.get(f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial", payload={"Identifier": ""})
+        with pytest.raises(api.NotConfigured):
+            await client.identifier(VIN)
+    await client.close()
+
+
+async def test_rate_limit_waits_retry_after(monkeypatch):
+    waits = []
+
+    async def fake_sleep(seconds):
+        waits.append(seconds)
+
+    monkeypatch.setattr(api.asyncio, "sleep", fake_sleep)
+    client = api.DataActClient("me@example.com", "pw")
+    url = f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial"
+    with aioresponses() as m:
+        m.get(url, status=429, headers={"Retry-After": "120"})
+        m.get(url, status=429, headers={"Retry-After": "3"})
+        m.get(url, payload={"Identifier": IDENT})
+        assert await client.identifier(VIN) == IDENT
+    assert waits == [api.MAX_RETRY_AFTER, 3]
+    await client.close()
+
+
+async def test_server_error_raises():
+    client = api.DataActClient("me@example.com", "pw")
+    with aioresponses() as m:
+        m.get(f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial", status=500, body="oops")
+        with pytest.raises(api.DataActError, match="500"):
+            await client.identifier(VIN)
+    await client.close()
+
+
+async def test_second_rejection_after_relogin_is_auth_error():
+    client = api.DataActClient("me@example.com", "pw")
+    url = f"{PORTAL}/proxy_api/euda-apim/datarequest/vehicles/{VIN}/metadata/partial"
+    with aioresponses() as m:
+        m.get(url, status=401)
+        m.get(AUTH_RE, body=ULP_PAGE)
+        m.post("https://identity.vwgroup.io/u/login?state=st123", status=302, headers={"Location": USER_PAGE})
+        m.get(url, status=401)
+        with pytest.raises(api.AuthError):
+            await client.identifier(VIN)
+    await client.close()
+
+
+async def test_concurrent_relogin_runs_once():
+    client = api.DataActClient("me@example.com", "pw")
+    with aioresponses() as m:
+        m.get(AUTH_RE, body=ULP_PAGE)
+        m.post("https://identity.vwgroup.io/u/login?state=st123", status=302, headers={"Location": USER_PAGE})
+        gen = client._login_gen
+        await client.login(gen)
+        await client.login(gen)  # stale generation: another caller already logged in
+        posts = [k for k in m.requests if k[0] == "POST"]
+        assert len(m.requests[posts[0]]) == 1
+    await client.close()
+
+
+async def test_unknown_login_page():
+    client = api.DataActClient("me@example.com", "pw")
+    with aioresponses() as m:
+        m.get(AUTH_RE, body="<html><form id='captcha'></form></html>")
+        with pytest.raises(api.DataActError, match="unknown login page"):
+            await client.login()
+    await client.close()
+
+
+async def test_redirect_to_foreign_host_is_refused():
+    client = api.DataActClient("me@example.com", "pw")
+    with aioresponses() as m:
+        m.get(AUTH_RE, status=302, headers={"Location": "https://evil.example.com/login"})
+        with pytest.raises(api.DataActError, match="unexpected login redirect host"):
+            await client.login()
+    await client.close()
+
+
+async def test_legacy_wrong_password():
+    client = api.DataActClient("me@example.com", "bad")
+    with aioresponses() as m:
+        m.get(AUTH_RE, body=LEGACY_PAGE)
+        m.post("https://identity.vwgroup.io/signin-service/v1/cid/login/identifier", body=LEGACY_PW_PAGE)
+        m.post(
+            "https://identity.vwgroup.io/signin-service/v1/cid/login/authenticate",
+            status=302,
+            headers={
+                "Location": "https://identity.vwgroup.io/signin-service/v1/cid/login/authenticate?error=login.errors.password_invalid"
+            },
+        )
+        m.get(
+            "https://identity.vwgroup.io/signin-service/v1/cid/login/authenticate?error=login.errors.password_invalid",
+            body="<html>wrong</html>",
+        )
+        with pytest.raises(api.AuthError, match="password_invalid"):
+            await client.login()
+    await client.close()
+
+
+async def test_legacy_unknown_email():
+    client = api.DataActClient("nobody@example.com", "pw")
+    page = LEGACY_PW_PAGE.replace('"error":null', '"error":"account.not.found"')
+    with aioresponses() as m:
+        m.get(AUTH_RE, body=LEGACY_PAGE)
+        m.post("https://identity.vwgroup.io/signin-service/v1/cid/login/identifier", body=page)
+        with pytest.raises(api.AuthError, match="account.not.found"):
+            await client.login()
+    await client.close()
+
+
+async def test_update_only_downloads_new_datasets():
+    client = api.DataActClient("me@example.com", "pw")
+    list_url = f"{PORTAL}/proxy_api/euda-apim/datadelivery/vehicles/{VIN}/{IDENT}/list"
+    dl_url = f"{PORTAL}/proxy_api/euda-apim/datadelivery/vehicles/{VIN}/{IDENT}/download"
+    state = api.VehicleState(identifier=IDENT)
+    with aioresponses() as m:
+        m.get(list_url, payload=[{"name": "1.zip", "createdOn": "2026-10-01T10:00:00Z"}])
+        m.get(dl_url, body=make_zip([dp("mileage", "10", "2026-10-01T09:59:00Z")]))
+        assert await client.update(VIN, state) == 1
+
+        m.get(
+            list_url,
+            payload=[
+                {"name": "1.zip", "createdOn": "2026-10-01T10:00:00Z"},
+                {"name": "2.zip", "createdOn": "2026-10-01T10:15:00Z"},
+            ],
+        )
+        m.get(dl_url, body=make_zip([dp("mileage", "11", "2026-10-01T10:14:00Z")]))
+        assert await client.update(VIN, state) == 1
+        assert state.find("mileage").value == "11"
+        assert state.seq == 2
+        assert state.after == api.parse_time("2026-10-01T10:15:00Z")
+
+        m.get(list_url, payload=[{"name": "2.zip", "createdOn": "2026-10-01T10:15:00Z"}])
+        assert await client.update(VIN, state) == 0
+    await client.close()

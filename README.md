@@ -48,9 +48,12 @@ python tools/probe.py you@example.com          # add --all to dump every data po
 ## Development
 
 ```sh
-pip install pytest-homeassistant-custom-component aioresponses
+pip install -r requirements_test.txt   # Python 3.13
 pytest
+ruff check . && ruff format --check .
 ```
+
+GitHub Actions runs the same lint and tests on every pull request and on pushes to `main`.
 
 The portal protocol lives in `custom_components/cupra_dataact/api.py`, which has no HA imports.
 It mirrors evcc's `vehicle/vw/eudataact`, so check that project when VW changes something.
