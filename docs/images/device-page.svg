@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="600" viewBox="0 0 920 600" font-family="Roboto, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Mock-up: the Born device page in Home Assistant</title>
+  <rect width="920" height="600" fill="#fafafa"/>
+  <!-- top bar -->
+  <rect width="920" height="56" fill="#03a9f4"/>
+  <path d="M24 28 l8 -8 M24 28 l8 8 M24 28 h18" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <text x="60" y="35" font-size="20" fill="#fff">Born</text>
+  <text x="896" y="35" font-size="12" fill="#e1f5fe" text-anchor="end">MOCK-UP · SAMPLE DATA</text>
+
+  <!-- device info card -->
+  <rect x="24" y="80" width="280" height="250" rx="12" fill="#fff" stroke="#e0e0e0"/>
+  <text x="44" y="114" font-size="16" font-weight="500" fill="#212121">Device info</text>
+  <text x="44" y="146" font-size="14" fill="#212121">Born</text>
+  <text x="44" y="168" font-size="14" fill="#727272">by CUPRA</text>
+  <text x="44" y="200" font-size="13" fill="#727272">Serial number</text>
+  <text x="44" y="220" font-size="13" fill="#212121">VSSZZZK1Z••••••01</text>
+  <text x="44" y="252" font-size="13" fill="#727272">Integration</text>
+  <text x="44" y="272" font-size="13" fill="#03a9f4">CUPRA (EU Data Act)</text>
+  <line x1="24" y1="292" x2="304" y2="292" stroke="#e0e0e0"/>
+  <text x="44" y="316" font-size="13" font-weight="500" fill="#03a9f4">DOWNLOAD DIAGNOSTICS</text>
+
+  <!-- sensors card -->
+  <rect x="328" y="80" width="568" height="380" rx="12" fill="#fff" stroke="#e0e0e0"/>
+  <text x="348" y="114" font-size="16" font-weight="500" fill="#212121">Sensors</text>
+  <g font-size="14">
+    <g transform="translate(348 140)"><circle cx="12" cy="12" r="12" fill="#e8f5e9"/><rect x="8" y="5" width="8" height="14" rx="1.5" fill="none" stroke="#43a047" stroke-width="1.6"/><rect x="9.5" y="11" width="5" height="6.5" fill="#43a047"/><text x="40" y="17" fill="#212121">Battery level</text><text x="528" y="17" fill="#212121" text-anchor="end">61 %</text></g>
+    <g transform="translate(348 176)"><circle cx="12" cy="12" r="12" fill="#e8f5e9"/><rect x="8" y="5" width="8" height="14" rx="1.5" fill="none" stroke="#43a047" stroke-width="1.6"/><rect x="9.5" y="9" width="5" height="8.5" fill="#43a047"/><text x="40" y="17" fill="#212121">Battery level (best)</text><text x="528" y="17" fill="#212121" text-anchor="end">64 %</text></g>
+    <g transform="translate(348 212)"><circle cx="12" cy="12" r="12" fill="#e3f2fd"/><path d="M5 16 h14 M12 7 v9 M8 10 l4 -4 l4 4" stroke="#1e88e5" stroke-width="1.6" fill="none"/><text x="40" y="17" fill="#212121">Range</text><text x="528" y="17" fill="#212121" text-anchor="end">274 km</text></g>
+    <g transform="translate(348 248)"><circle cx="12" cy="12" r="12" fill="#e3f2fd"/><circle cx="12" cy="13" r="6" fill="none" stroke="#1e88e5" stroke-width="1.6"/><path d="M12 13 l3 -3" stroke="#1e88e5" stroke-width="1.6"/><text x="40" y="17" fill="#212121">Odometer</text><text x="528" y="17" fill="#212121" text-anchor="end">18,432 km</text></g>
+    <g transform="translate(348 284)"><circle cx="12" cy="12" r="12" fill="#fff3e0"/><path d="M7 12 h10 M12 7 v10" stroke="#fb8c00" stroke-width="1.6"/><text x="40" y="17" fill="#212121">Charge target</text><text x="528" y="17" fill="#212121" text-anchor="end">80 %</text></g>
+    <g transform="translate(348 320)"><circle cx="12" cy="12" r="12" fill="#fff3e0"/><path d="M13 5 l-5 8 h4 l-1 6 l5 -8 h-4 z" fill="#fb8c00"/><text x="40" y="17" fill="#212121">Charging state</text><text x="528" y="17" fill="#212121" text-anchor="end">charging</text></g>
+    <g transform="translate(348 356)"><circle cx="12" cy="12" r="12" fill="#fff3e0"/><circle cx="12" cy="12" r="6" fill="none" stroke="#fb8c00" stroke-width="1.6"/><path d="M12 9 v3 h3" stroke="#fb8c00" stroke-width="1.6" fill="none"/><text x="40" y="17" fill="#212121">Remaining charging time</text><text x="528" y="17" fill="#212121" text-anchor="end">1 h 35 min</text></g>
+    <g transform="translate(348 392)"><circle cx="12" cy="12" r="12" fill="#e8f5e9"/><path d="M9 6 v4 M15 6 v4 M7 10 h10 v3 a5 5 0 0 1 -10 0 z M12 18 v3" stroke="#43a047" stroke-width="1.6" fill="none"/><text x="40" y="17" fill="#212121">Plugged in</text><text x="528" y="17" fill="#212121" text-anchor="end">Plugged in</text></g>
+    <g transform="translate(348 428)"><circle cx="12" cy="12" r="12" fill="#e8f5e9"/><path d="M13 5 l-5 8 h4 l-1 6 l5 -8 h-4 z" fill="#43a047"/><text x="40" y="17" fill="#212121">Charging</text><text x="528" y="17" fill="#212121" text-anchor="end">Charging</text></g>
+  </g>
+
+  <!-- diagnostic card -->
+  <rect x="328" y="480" width="568" height="100" rx="12" fill="#fff" stroke="#e0e0e0"/>
+  <text x="348" y="512" font-size="16" font-weight="500" fill="#212121">Diagnostic</text>
+  <g font-size="14">
+    <text x="388" y="542" fill="#212121">Last measurement</text><text x="876" y="542" fill="#212121" text-anchor="end">10 minutes ago</text>
+    <text x="388" y="566" fill="#212121">Last portal delivery</text><text x="876" y="566" fill="#212121" text-anchor="end">7 minutes ago</text>
+  </g>
+  <circle cx="360" cy="537" r="8" fill="none" stroke="#757575" stroke-width="1.6"/><path d="M360 533 v4 h3" stroke="#757575" stroke-width="1.6" fill="none"/>
+  <circle cx="360" cy="561" r="8" fill="none" stroke="#757575" stroke-width="1.6"/><path d="M356 561 l3 3 l5 -6" stroke="#757575" stroke-width="1.6" fill="none"/>
+
+  <!-- activity hint -->
+  <rect x="24" y="350" width="280" height="230" rx="12" fill="#fff" stroke="#e0e0e0"/>
+  <text x="44" y="384" font-size="16" font-weight="500" fill="#212121">Battery level attributes</text>
+  <g font-size="13">
+    <text x="44" y="416" fill="#727272">measured_at</text><text x="44" y="436" fill="#212121">2026-11-01 10:42:00</text>
+    <text x="44" y="468" fill="#727272">field</text><text x="44" y="488" fill="#212121">battery_state_report.soc</text>
+    <text x="44" y="520" fill="#727272">Battery level (best) · source</text><text x="44" y="540" fill="#212121">sensor.wican_born_soc</text>
+  </g>
+</svg>

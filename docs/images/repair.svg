@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="250" viewBox="0 0 720 250" font-family="Roboto, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Mock-up: the "No data request" repair</title>
+  <rect width="720" height="250" fill="#fafafa"/>
+  <rect x="20" y="20" width="680" height="210" rx="12" fill="#fff" stroke="#e0e0e0"/>
+  <text x="44" y="56" font-size="16" font-weight="500" fill="#212121">Repairs</text>
+  <text x="676" y="56" font-size="11" fill="#9e9e9e" text-anchor="end">MOCK-UP</text>
+  <line x1="20" y1="74" x2="700" y2="74" stroke="#e0e0e0"/>
+  <circle cx="64" cy="112" r="20" fill="#fff3e0"/>
+  <path d="M64 100 l11 20 h-22 z" fill="none" stroke="#fb8c00" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M64 108 v6" stroke="#fb8c00" stroke-width="2"/><circle cx="64" cy="117.5" r="1.2" fill="#fb8c00"/>
+  <text x="100" y="106" font-size="15" fill="#212121">No data request for Born</text>
+  <text x="100" y="126" font-size="13" fill="#727272">CUPRA (EU Data Act) · Warning</text>
+  <g font-size="13" fill="#5f5f5f">
+    <text x="100" y="160">The EU Data Act portal has no data request for Born. Open the portal, select the car</text>
+    <text x="100" y="180">and create a continuous data request (every 15 minutes). Sensors stay empty until</text>
+    <text x="100" y="200">the first dataset arrives, which can take from 15 minutes to a day.</text>
+  </g>
+  <text x="676" y="112" font-size="13" font-weight="500" fill="#03a9f4" text-anchor="end">LEARN MORE</text>
+</svg>

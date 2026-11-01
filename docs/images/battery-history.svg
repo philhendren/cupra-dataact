@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360" font-family="Roboto, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Mock-up: history of portal battery level versus a live OBD reading during an evening charge</title>
+  <rect width="900" height="360" fill="#fff"/>
+  <text x="80" y="28" font-size="16" font-weight="500" fill="#212121">History · evening charge</text>
+  <text x="860" y="28" font-size="11" fill="#9e9e9e" text-anchor="end">MOCK-UP · SAMPLE DATA</text>
+  <!-- grid -->
+  <g stroke="#eeeeee"><line x1="80" y1="50" x2="860" y2="50"/><line x1="80" y1="110" x2="860" y2="110"/><line x1="80" y1="170" x2="860" y2="170"/><line x1="80" y1="230" x2="860" y2="230"/></g>
+  <line x1="80" y1="290" x2="860" y2="290" stroke="#bdbdbd"/>
+  <g font-size="11" fill="#727272" text-anchor="end"><text x="70" y="54">100 %</text><text x="70" y="114">75 %</text><text x="70" y="174">50 %</text><text x="70" y="234">25 %</text><text x="70" y="294">0 %</text></g>
+  <g font-size="11" fill="#727272" text-anchor="middle"><text x="80" y="310">18:00</text><text x="236" y="310">19:00</text><text x="392" y="310">20:00</text><text x="548" y="310">21:00</text><text x="704" y="310">22:00</text><text x="860" y="310">23:00</text></g>
+  <!-- plugged-in band -->
+  <rect x="158" y="50" width="702" height="240" fill="#03a9f4" opacity="0.05"/>
+  <text x="164" y="66" font-size="11" fill="#0288d1">plugged in 18:30</text>
+  <!-- local OBD -->
+  <polyline points="158,218 782,98 860,98" fill="none" stroke="#43a047" stroke-width="2.5"/>
+  <!-- portal steps -->
+  <polyline points="80,218 340,218 340,189.2 535,189.2 535,158 756,158 756,119.6 860,119.6" fill="none" stroke="#fb8c00" stroke-width="2.5" stroke-dasharray="6 4"/>
+  <g fill="#fb8c00"><circle cx="340" cy="189.2" r="4"/><circle cx="535" cy="158" r="4"/><circle cx="756" cy="119.6" r="4"/></g>
+  <!-- annotation -->
+  <line x1="782" y1="98" x2="782" y2="119.6" stroke="#757575" stroke-dasharray="2 3"/>
+  <text x="776" y="90" font-size="11" fill="#212121" text-anchor="end">target reached 22:30 · OBD 80 %, portal still 71 %</text>
+  <!-- legend -->
+  <g font-size="12" fill="#212121">
+    <line x1="80" y1="336" x2="104" y2="336" stroke="#43a047" stroke-width="2.5"/><text x="112" y="340">Battery level (best), from sensor.wican_born_soc</text>
+    <line x1="470" y1="336" x2="494" y2="336" stroke="#fb8c00" stroke-width="2.5" stroke-dasharray="6 4"/><text x="502" y="340">Battery level (portal, arrives late)</text>
+  </g>
+</svg>
