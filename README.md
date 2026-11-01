@@ -1,3 +1,5 @@
+<img src="custom_components/cupra_dataact/brand/icon.png" alt="" width="96" align="right">
+
 # CUPRA (EU Data Act) for Home Assistant
 
 Read-only CUPRA vehicle data in Home Assistant, sourced from the VW Group **EU Data Act portal**.
@@ -109,6 +111,13 @@ uv run python tools/gen_tests_readme.py    # regenerate tests/README.md after ch
 ```
 
 [tests/README.md](tests/README.md) lists every test, what it checks and links to each assert. GitHub Actions runs ruff, the tests and a check that the test README is up to date on every pull request and push to `main`.
+
+The integration icon is drawn in `docs/brand/icon.svg`. Home Assistant 2026.3 and later show the PNGs in
+`custom_components/cupra_dataact/brand/`. After you edit the SVG, regenerate them with:
+
+```sh
+uv run --with cairosvg python -c "import cairosvg; [cairosvg.svg2png(url='docs/brand/icon.svg', write_to=f'custom_components/cupra_dataact/brand/{n}', output_width=s, output_height=s) for n, s in [('icon.png', 256), ('icon@2x.png', 512)]]"
+```
 
 The portal protocol lives in `custom_components/cupra_dataact/api.py`, which has no HA imports.
 It mirrors evcc's `vehicle/vw/eudataact`, so check that project when VW changes something.
