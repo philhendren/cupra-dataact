@@ -34,10 +34,12 @@
         "title": "Options",
         "data": {
           "scan_interval": "Poll interval",
+          "distance_unit": "Distance unit",
           "local_soc_entity": "Live battery level sensor (optional)"
         },
         "data_description": {
           "scan_interval": "How often to check the portal for new datasets. New data arrives at most every 15 minutes.",
+          "distance_unit": "The unit your car's display uses. The portal sends range and odometer in that unit without saying which, so check it against the CUPRA app.",
           "local_soc_entity": "For example an OBD dongle (WiCAN) or wallbox SoC sensor. Adds a 'Battery level (best)' sensor that uses whichever value is fresher."
         }
       }
@@ -51,6 +53,12 @@
         "volkswagen": "Volkswagen",
         "audi": "Audi",
         "skoda": "Škoda"
+      }
+    },
+    "distance_unit": {
+      "options": {
+        "km": "Kilometres",
+        "mi": "Miles"
       }
     }
   },

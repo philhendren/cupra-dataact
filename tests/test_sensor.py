@@ -14,7 +14,7 @@ from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.cupra_dataact.api import Point, parse_time
-from custom_components.cupra_dataact.const import CONF_LOCAL_SOC, DOMAIN
+from custom_components.cupra_dataact.const import CONF_DISTANCE_UNIT, CONF_LOCAL_SOC, DOMAIN
 
 from .conftest import DATA, VIN, fill, setup_entry, updater
 
@@ -35,6 +35,20 @@ async def test_value_sensors(hass: HomeAssistant, config_entry: MockConfigEntry,
         assert state is not None, entity_id
         assert state.state == value, entity_id
         assert state.attributes.get("unit_of_measurement") == unit, entity_id
+
+
+async def test_distance_sensors_in_miles(hass: HomeAssistant, mock_client: MagicMock) -> None:
+    """With the miles option, range and odometer show the portal values in miles, unconverted."""
+    entry = MockConfigEntry(
+        domain=DOMAIN, data=DATA, options={CONF_DISTANCE_UNIT: "mi"}, unique_id="cupra:me@example.com"
+    )
+    entry.add_to_hass(hass)
+    assert await setup_entry(hass, entry)
+    for entity_id, value in {"sensor.born_range": "280.0", "sensor.born_odometer": "12345.0"}.items():
+        state = hass.states.get(entity_id)
+        assert state.state == value, entity_id
+        assert state.attributes["unit_of_measurement"] == "mi", entity_id
+    assert hass.states.get("sensor.born_battery_level").attributes["unit_of_measurement"] == "%"
 
 
 async def test_measured_at_and_field_attributes(

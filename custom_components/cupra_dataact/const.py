@@ -9,6 +9,12 @@ PORTAL_URL = "https://eu-data-act.drivesomethinggreater.com"
 CONF_BRAND = "brand"
 CONF_LOCAL_SOC = "local_soc_entity"
 CONF_SCAN_INTERVAL = "scan_interval"
+# the portal sends distances in the unit the car is set to, without saying which
+CONF_DISTANCE_UNIT = "distance_unit"
+DISTANCE_UNITS = ("km", "mi")
+DEFAULT_DISTANCE_UNIT = "km"
+# unique_id suffixes of the sensors that report a distance
+DISTANCE_SENSOR_SUFFIXES = ("_range", "_odometer")
 
 DEFAULT_BRAND = "cupra"
 # the portal stores a dataset about every 15 minutes; polling the list is cheap
