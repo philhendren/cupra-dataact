@@ -11,7 +11,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.cupra_dataact.api import AuthError, ConsentRequired, DataActError
-from custom_components.cupra_dataact.const import CONF_LOCAL_SOC, CONF_SCAN_INTERVAL, DOMAIN
+from custom_components.cupra_dataact.const import CONF_DISTANCE_UNIT, CONF_LOCAL_SOC, CONF_SCAN_INTERVAL, DOMAIN
 
 from .conftest import DATA, VIN2, setup_entry
 
@@ -119,7 +119,7 @@ async def test_reauth_rejects_wrong_password(
 
 
 async def test_options_flow(hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock) -> None:
-    """Options save the poll interval and local battery sensor and add the best-battery sensor."""
+    """Options save the poll interval, distance unit (km by default) and local battery sensor."""
     assert await setup_entry(hass, config_entry)
     hass.states.async_set("sensor.obd_soc", "50", {"device_class": "battery"})
 
@@ -131,5 +131,23 @@ async def test_options_flow(hass: HomeAssistant, config_entry: MockConfigEntry, 
     )
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert config_entry.options == {CONF_SCAN_INTERVAL: 10, CONF_LOCAL_SOC: "sensor.obd_soc"}
+    assert config_entry.options == {CONF_SCAN_INTERVAL: 10, CONF_DISTANCE_UNIT: "km", CONF_LOCAL_SOC: "sensor.obd_soc"}
     assert hass.states.get("sensor.born_battery_level_best") is not None
+
+
+async def test_options_switch_to_miles_relabels_existing_sensors(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_client: MagicMock
+) -> None:
+    """Switching an existing entry to miles keeps the portal value and shows it in miles, not converted to km."""
+    assert await setup_entry(hass, config_entry)
+    assert hass.states.get("sensor.born_odometer").attributes["unit_of_measurement"] == "km"
+
+    result = await hass.config_entries.options.async_init(config_entry.entry_id)
+    await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_SCAN_INTERVAL: 5, CONF_DISTANCE_UNIT: "mi"}
+    )
+    await hass.async_block_till_done()
+    for entity_id, value in {"sensor.born_odometer": "12345.0", "sensor.born_range": "280.0"}.items():
+        state = hass.states.get(entity_id)
+        assert state.state == value, entity_id
+        assert state.attributes["unit_of_measurement"] == "mi", entity_id

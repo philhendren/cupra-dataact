@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
@@ -31,7 +31,9 @@ from .api import Point
 from .const import (
     CHARGE_POWER,
     CHARGING_STATE,
+    CONF_DISTANCE_UNIT,
     CONF_LOCAL_SOC,
+    DEFAULT_DISTANCE_UNIT,
     ODOMETER,
     RANGE,
     REMAINING_CHARGE_TIME,
@@ -106,6 +108,24 @@ SENSORS: tuple[DataActSensorDescription, ...] = (
 )
 
 
+def _with_distance_unit(
+    descriptions: tuple[DataActSensorDescription, ...], unit: str
+) -> tuple[DataActSensorDescription, ...]:
+    """Label distance sensors with the unit the car reports in.
+
+    The portal sends range and odometer in the car's display unit and does not say which. Miles
+    are also the suggested unit, so Home Assistant doesn't convert them to km on a metric system.
+    """
+    if unit != "mi":
+        return descriptions
+    return tuple(
+        replace(d, native_unit_of_measurement=UnitOfLength.MILES, suggested_unit_of_measurement=UnitOfLength.MILES)
+        if d.device_class == SensorDeviceClass.DISTANCE
+        else d
+        for d in descriptions
+    )
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: DataActConfigEntry,
@@ -113,9 +133,10 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     local_soc = entry.options.get(CONF_LOCAL_SOC)
+    descriptions = _with_distance_unit(SENSORS, entry.options.get(CONF_DISTANCE_UNIT, DEFAULT_DISTANCE_UNIT))
     entities: list[SensorEntity] = []
     for vin in coordinator.vehicles:
-        entities.extend(DataActSensor(coordinator, vin, d) for d in SENSORS)
+        entities.extend(DataActSensor(coordinator, vin, d) for d in descriptions)
         entities.append(LastDataSensor(coordinator, vin))
         entities.append(LastDeliverySensor(coordinator, vin))
         if local_soc:

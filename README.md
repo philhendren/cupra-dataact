@@ -46,6 +46,9 @@ Open the integration and choose **Configure** to set:
 
 - **Poll interval:** how often to check the portal for new datasets (default 5 minutes, minimum 2).
   Polling more often than every 15 minutes only shortens the wait after VW publishes a dataset.
+- **Distance unit:** kilometres (default) or miles. The portal sends range and odometer in the unit
+  your car's display uses and doesn't say which. If the numbers match the CUPRA app's miles, choose
+  Miles. Home Assistant can still show them in another unit (entity settings → Unit of measurement).
 - **Live battery level sensor:** any battery sensor in Home Assistant, such as an OBD dongle
   (WiCAN over MQTT) or your wallbox. This adds **Battery level (best)**, which shows whichever reading
   is newer and names its source in the `source` attribute.
@@ -67,8 +70,8 @@ late steps, while the OBD reading tracks the car:
 |---|---|---|
 | `sensor.born_battery_level` | 61 % | From the portal |
 | `sensor.born_battery_level_best` | 64 % | Only with a live battery sensor configured |
-| `sensor.born_range` | 274 km | |
-| `sensor.born_odometer` | 18,432 km | |
+| `sensor.born_range` | 274 km | In miles if the Distance unit option is set to Miles |
+| `sensor.born_odometer` | 18,432 km | In miles if the Distance unit option is set to Miles |
 | `sensor.born_charge_target` | 80 % | |
 | `sensor.born_charging_state` | charging | Raw portal value |
 | `sensor.born_remaining_charging_time` | 95 min | |

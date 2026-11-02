@@ -10,15 +10,20 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 
 from .api import BRANDS, AuthError, ConsentRequired, DataActClient, DataActError
 from .const import (
     CONF_BRAND,
+    CONF_DISTANCE_UNIT,
     CONF_LOCAL_SOC,
     CONF_SCAN_INTERVAL,
     DEFAULT_BRAND,
+    DEFAULT_DISTANCE_UNIT,
     DEFAULT_SCAN_INTERVAL,
+    DISTANCE_SENSOR_SUFFIXES,
+    DISTANCE_UNITS,
     DOMAIN,
     MIN_SCAN_INTERVAL_MINUTES,
     PORTAL_URL,
@@ -112,10 +117,13 @@ class DataActConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class DataActOptionsFlow(OptionsFlow):
-    """Poll interval and an optional live SoC source (e.g. an OBD dongle) to blend in."""
+    """Poll interval, distance unit and an optional live SoC source (e.g. an OBD dongle) to blend in."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
+            unit = user_input.get(CONF_DISTANCE_UNIT, DEFAULT_DISTANCE_UNIT)
+            if unit != self.config_entry.options.get(CONF_DISTANCE_UNIT, DEFAULT_DISTANCE_UNIT):
+                self._set_distance_display_unit(unit)
             return self.async_create_entry(data=user_input)
 
         schema = vol.Schema(
@@ -127,6 +135,9 @@ class DataActOptionsFlow(OptionsFlow):
                         min=MIN_SCAN_INTERVAL_MINUTES, max=60, step=1, unit_of_measurement="min"
                     )
                 ),
+                vol.Required(CONF_DISTANCE_UNIT, default=DEFAULT_DISTANCE_UNIT): selector.SelectSelector(
+                    selector.SelectSelectorConfig(options=list(DISTANCE_UNITS), translation_key="distance_unit")
+                ),
                 vol.Optional(CONF_LOCAL_SOC): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain="sensor", device_class="battery")
                 ),
@@ -136,3 +147,15 @@ class DataActOptionsFlow(OptionsFlow):
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(schema, self.config_entry.options),
         )
+
+    def _set_distance_display_unit(self, unit: str) -> None:
+        """Show existing distance sensors in the chosen unit.
+
+        Home Assistant keeps the old display unit when the native unit changes, which would convert
+        the newly labelled miles back to km. A user choice made later in the entity settings still wins.
+        """
+        registry = er.async_get(self.hass)
+        for entity in er.async_entries_for_config_entry(registry, self.config_entry.entry_id):
+            if entity.domain == "sensor" and entity.unique_id.endswith(DISTANCE_SENSOR_SUFFIXES):
+                options = {**entity.options.get("sensor", {}), "unit_of_measurement": unit}
+                registry.async_update_entity_options(entity.entity_id, "sensor", options)
