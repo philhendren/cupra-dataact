@@ -22,7 +22,7 @@ the portal updates at most every 15 minutes, and often less often.
 
 ## 1. One-time setup on the portal (required)
 
-1. Open https://eu-data-act.drivesomethinggreater.com and sign in with your CUPRA ID (My CUPRA app login).
+1. Open https://eu-data-act.vwgroup-datahub.com and sign in with your CUPRA ID (My CUPRA app login).
 2. Accept the consent screen and link your car. You must be its primary user.
 3. Create a **continuous** data request (every 15 minutes). Don't create a one-time export first,
    because only one request can be active at a time.

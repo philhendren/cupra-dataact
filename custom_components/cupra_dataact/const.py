@@ -4,7 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "cupra_dataact"
 MANUFACTURERS = {"cupra": "CUPRA", "seat": "SEAT", "volkswagen": "Volkswagen", "audi": "Audi", "skoda": "Škoda"}
-PORTAL_URL = "https://eu-data-act.drivesomethinggreater.com"
+PORTAL_URL = "https://eu-data-act.vwgroup-datahub.com"
 
 CONF_BRAND = "brand"
 CONF_LOCAL_SOC = "local_soc_entity"

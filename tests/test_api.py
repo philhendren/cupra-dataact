@@ -191,6 +191,25 @@ async def test_universal_login_and_update():
     await client.close()
 
 
+async def test_login_via_legacy_portal_host():
+    """A login callback on the old portal host is followed through its 301 to the new host."""
+    client = api.DataActClient("me@example.com", "pw")
+    legacy = f"https://{api.LEGACY_PORTAL_HOST}"
+    with aioresponses() as m:
+        m.get(AUTH_RE, status=302, headers={"Location": "https://identity.vwgroup.io/u/login?state=st123"})
+        m.get("https://identity.vwgroup.io/u/login?state=st123", body=ULP_PAGE)
+        m.post(
+            "https://identity.vwgroup.io/u/login?state=st123",
+            status=302,
+            headers={"Location": f"{legacy}/login?code=abc"},
+        )
+        m.get(f"{legacy}/login?code=abc", status=301, headers={"Location": f"{PORTAL}/login?code=abc"})
+        m.get(f"{PORTAL}/login?code=abc", status=302, headers={"Location": USER_PAGE})
+
+        await client.login()
+    await client.close()
+
+
 async def test_legacy_login():
     """The legacy two-step (email, then password) login lands on the portal."""
     client = api.DataActClient("me@example.com", "pw")
