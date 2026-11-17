@@ -1,4 +1,4 @@
-"""Client for the VW Group EU Data Act portal (eu-data-act.drivesomethinggreater.com).
+"""Client for the VW Group EU Data Act portal (eu-data-act.vwgroup-datahub.com).
 
 Since June 2026, the CUPRA/SEAT app backend (OLA) only accepts requests that carry
 a Firebase App Check / Play Integrity device token, which no third-party client can
@@ -34,8 +34,11 @@ from yarl import URL
 
 _LOGGER = logging.getLogger(__name__)
 
-BASE_URL = "https://eu-data-act.drivesomethinggreater.com"
-PORTAL_HOST = "eu-data-act.drivesomethinggreater.com"
+# the portal moved here from eu-data-act.drivesomethinggreater.com in November 2026;
+# the old host now answers with a 301 to this one
+PORTAL_HOST = "eu-data-act.vwgroup-datahub.com"
+BASE_URL = f"https://{PORTAL_HOST}"
+LEGACY_PORTAL_HOST = "eu-data-act.drivesomethinggreater.com"
 IDENTITY_URL = "https://identity.vwgroup.io"
 IDENTITY_HOST = "identity.vwgroup.io"
 AUTHORIZE_URL = f"{IDENTITY_URL}/oidc/v1/authorize"
@@ -145,7 +148,7 @@ def _is_marketing_consent(url: URL) -> bool:
 
 
 def _allowed_host(host: str | None) -> bool:
-    return host in (IDENTITY_HOST, PORTAL_HOST)
+    return host in (IDENTITY_HOST, PORTAL_HOST, LEGACY_PORTAL_HOST)
 
 
 # --- dataset handling ---------------------------------------------------------

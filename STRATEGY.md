@@ -27,7 +27,7 @@ at will.
 
 | Path | Data | Latency | Control | Stability | Verdict |
 |---|---|---|---|---|---|
-| **EU Data Act portal** (`eu-data-act.drivesomethinggreater.com`) | SoC, range, odometer, charge state/plug/target, ~100+ fields once flowing | 15 min at best; often hours; sometimes empty "no_content" files | none | Legally mandated (EU Data Act, applies since Sep 2025). Buggy, but VW can't simply shut it off | **Primary cloud source** |
+| **EU Data Act portal** (`eu-data-act.vwgroup-datahub.com`) | SoC, range, odometer, charge state/plug/target, ~100+ fields once flowing | 15 min at best; often hours; sometimes empty "no_content" files | none | Legally mandated (EU Data Act, applies since Sep 2025). Buggy, but VW can't simply shut it off | **Primary cloud source** |
 | volkswagen.de web login (vwgroup-connect-ha #632) | VW brand only; CUPRA not confirmed | near-live | none | Beta, needs an email OTP to re-login | Not usable for CUPRA |
 | Local OBD dongle (WiCAN / ESP32 + MQTT, MEB UDS PIDs) | SoC, 12V, temps, odometer at home | seconds, only while the car is awake | none | Fully under your control | **Live overlay at home** |
 | Wallbox / energy provider (evcc, Octopus "Intelligent", OpenWB) | charge power, session energy, sometimes SoC | live | charge start/stop and current **at the charger** | Good | **Replaces charge control** |
@@ -85,7 +85,7 @@ at will.
 - CarConnectivity 403s: https://github.com/tillsteinbach/CarConnectivity-connector-seatcupra/issues/123
 - evcc reference implementation: https://github.com/evcc-io/evcc/tree/master/vehicle/vw/eudataact (Auth0 change: PR #35385)
 - evcc CUPRA setup: https://docs.evcc.io/en/vehicles/cupra-eu-data-act
-- Portal: https://eu-data-act.drivesomethinggreater.com · CUPRA Data Act page: https://www.cupra.com/en/eu-data-act
+- Portal: https://eu-data-act.vwgroup-datahub.com · CUPRA Data Act page: https://www.cupra.com/en/eu-data-act
 - Community issue tracking (campaign site, treat as unverified): https://vw-data-act-watch.surge.sh/
 - HA forum Data Act beta thread: https://community.home-assistant.io/t/beta-vw-group-eu-data-act-vehicle-data-for-vw-audi-skoda-seat-cupra-bentley-official-portal/1013514
 - WiCAN EV SoC example: https://github.com/meatpiHQ/wican-fw/wiki/EV-Battery-SoC-in-Home-Assistant-%E2%80%90-Example
